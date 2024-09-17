@@ -7,9 +7,8 @@ export class PixabayService {
   private axiosClient: AxiosInstance;
 
   constructor() {
-    this.apiKey = '45640711-3b2c9c3e0dd9ac6e6a5b798be';
     this.axiosClient = axios.create({
-      baseURL: `https://pixabay.com/api/?key=${this.apiKey}&`,
+      baseURL: `https://pixabay.com/api/?key=${process.env.PIXABAY_API_KEY}&`,
     });
   }
 
@@ -21,15 +20,19 @@ export class PixabayService {
   }
 
   public async imagesClient(params: IPixabayImagesParams): Promise<string[]> {
-    console.log(params);
-    if (!('query' in params) || !('perPage' in params)) {
-      throw new Error('Both query and perPage are required.');
+    try {
+      if (!('query' in params) || !('perPage' in params)) {
+        throw new Error('Both query and perPage are required.');
+      }
+
+      const res = await this.axiosClient.get(
+        `&q=${encodeURIComponent(params.query)}&image_type=photo&per_page=${params.perPage}`,
+      );
+
+      return res.data.hits.map((d) => d.webformatURL);
+    } catch (error) {
+      console.warn(error);
+      throw new Error('Failed to fetch photos from Pixabay API.');
     }
-
-    const res = await this.axiosClient.get(
-      `&q=${encodeURIComponent(params.query)}&image_type=photo&per_page=${params.perPage}`,
-    );
-
-    return res.data.hits.map((d) => d.webformatURL);
   }
 }
